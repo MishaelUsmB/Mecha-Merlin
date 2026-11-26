@@ -1,15 +1,17 @@
-# ArUco Crate Perception Node — Design Documentation
+# ArUco Object Perception — Design Documentation
 
 **Package:** `eurobot_perception`  
 **Node name:** `aruco_crate_perception`  
 **File:** `aruco_crate_perception.py`  
-**Team:** Team Yellow (ARDILLA) — Eurobot 2026
+**Competition:** Eurobot 2027 stone support; legacy crate support retained
+
+> **Scope note:** This document's detailed crate behavior and parameter examples describe the 2026 prototype. The node now also recognizes 2027 stone marker ID 13 and can track multiple objects carrying that same ID. The 2027 rules do not specify the ArUco dictionary or physical marker size; verify both against the official field elements before using pose estimates for manipulation.
 
 ---
 
 ## 1. Purpose
 
-This node is the robot's "eyes" for finding hazelnut crates on the competition field. It reads frames from a USB camera, detects ArUco markers attached to the crates, estimates each crate's position relative to the robot, applies temporal filtering to suppress noise, and publishes reliable crate detections to the rest of the system.
+This node reads frames from a USB camera, detects configured ArUco markers, estimates object positions relative to the robot, applies temporal filtering to suppress noise, and publishes detections to the rest of the system. The 2027 rules identify stones with marker ID 13; legacy crate IDs remain available for the older simulation.
 
 ---
 
@@ -26,12 +28,12 @@ This node is the robot's "eyes" for finding hazelnut crates on the competition f
     │       │  Pose estimation (solvePnP)
     │       │  camera_to_base_link() transform
     │       │  Distance + angle computation
-    │       │  Outlier rejection
+    │       │  Spatial association for repeated marker IDs
     │       │  Confidence scoring
-    │       └─► updates TrackedCrate objects
+    │       └─► updates TrackedMarker objects
     │
     ├─► get_filtered_detections()
-    │       └─► weighted moving average over TrackedCrate history
+    │       └─► weighted moving average over per-object marker history
     │
     ├─► Publish  /crate/detections  (CrateDetectionArray)
     │

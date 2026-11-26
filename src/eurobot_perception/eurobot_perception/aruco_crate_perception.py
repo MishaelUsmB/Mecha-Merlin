@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 """
-PRODUCTION ARUCO CRATE PERCEPTION NODE - EUROBOT 2026
-=====================================================
+ARUCO OBJECT PERCEPTION - EUROBOT 2027 STONES AND LEGACY CRATES
+===============================================================
 
 Features:
 - Temporal filtering (Kalman-like smoothing)
-- Outlier rejection
+- Spatial association for repeated marker IDs
 - Adaptive confidence scoring
 - Comprehensive parameter validation
 - Proper coordinate transformations
@@ -13,7 +13,7 @@ Features:
 - Debug visualization
 - Performance monitoring
 
-Author: Team Yellow - Eurobot 2026
+Author: Team Yellow
 """
 
 import rclpy
@@ -27,14 +27,14 @@ import numpy as np
 import math
 from collections import deque
 from dataclasses import dataclass
-from typing import Optional, List, Dict
+from typing import Optional, List, Dict, Set
 
 from eurobot_interfaces.msg import CrateDetection, CrateDetectionArray
 
 
 @dataclass
-class TrackedCrate:
-    """Track a crate over time for temporal filtering"""
+class TrackedMarker:
+    """Track one physical object, even when multiple objects share a marker ID."""
     marker_id: int
     color: str
     positions: deque  # Recent (x, y) positions
@@ -104,7 +104,7 @@ class TrackedCrate:
         return float(np.mean(list(self.confidences)))
     
     def is_stable(self, min_detections: int = 2) -> bool:
-        """Check if crate has enough stable detections"""
+        """Check if the tracked marker has enough stable detections."""
         return self.detection_count >= min_detections
     
     def age(self, current_time: float) -> float:
@@ -113,7 +113,7 @@ class TrackedCrate:
 
 
 class ArucoCratePerception(Node):
-    """Production-ready ArUco crate perception for Eurobot 2026"""
+    """ArUco perception for 2027 stones and legacy crates."""
     
     def __init__(self):
         super().__init__('aruco_crate_perception')
@@ -132,7 +132,8 @@ class ArucoCratePerception(Node):
         self._setup_camera_model()
         
         # ==================== TRACKING ====================
-        self.tracked_crates: Dict[int, TrackedCrate] = {}
+        self.tracked_markers: Dict[int, TrackedMarker] = {}
+        self.next_track_id = 0
         self.tracking_timeout = 1.0  # seconds
         
         # ==================== STATISTICS ====================
@@ -160,10 +161,10 @@ class ArucoCratePerception(Node):
         self.create_timer(0.5, self._cleanup_old_tracks)
         
         self.get_logger().info("="*60)
-        self.get_logger().info("ARUCO CRATE PERCEPTION")
+        self.get_logger().info("ARUCO OBJECT PERCEPTION")
         self.get_logger().info("="*60)
         self.get_logger().info(f"Camera topic: {self.camera_topic}")
-        self.get_logger().info(f"Marker size: {self.marker_size}m")
+        self.get_logger().info(f"Marker size: {self.marker_size}m (verify for 2027 stones)")
         self.get_logger().info(f"Image size: {self.image_width}x{self.image_height}")
         self.get_logger().info(f"Focal length: {self.focal_length}px")
         self.get_logger().info(f"Temporal filtering: {self.enable_filtering}")
@@ -181,8 +182,9 @@ class ArucoCratePerception(Node):
         self.declare_parameter('focal_length', 277.0)
         
         # ArUco
-        self.declare_parameter('marker_size', 0.04)  # 40mm
+        self.declare_parameter('marker_size', 0.04)  # Provisional; verify against field stones.
         self.declare_parameter('aruco_dict', 'DICT_4X4_50')
+        self.declare_parameter('team_color', 'stone')
         
         # Detection thresholds
         self.declare_parameter('min_distance', 0.10)
@@ -202,8 +204,7 @@ class ArucoCratePerception(Node):
         self.declare_parameter('min_stable_detections', 2)
         self.declare_parameter('tracking_timeout', 1.0)  # seconds
         
-        # Outlier rejection
-        self.declare_parameter('enable_outlier_rejection', True)
+        # Spatial association for repeated marker IDs
         self.declare_parameter('max_position_jump', 0.5)  # meters
         
         # Debug
@@ -219,6 +220,7 @@ class ArucoCratePerception(Node):
         
         self.marker_size = self.get_parameter('marker_size').value
         self.aruco_dict_name = self.get_parameter('aruco_dict').value
+        self.team_color = self.get_parameter('team_color').value
         
         self.min_distance = self.get_parameter('min_distance').value
         self.max_distance = self.get_parameter('max_distance').value
@@ -235,7 +237,6 @@ class ArucoCratePerception(Node):
         self.min_stable_detections = self.get_parameter('min_stable_detections').value
         self.tracking_timeout = self.get_parameter('tracking_timeout').value
         
-        self.enable_outlier_rejection = self.get_parameter('enable_outlier_rejection').value
         self.max_position_jump = self.get_parameter('max_position_jump').value
         
         self.visualize = self.get_parameter('visualize').value
@@ -248,9 +249,6 @@ class ArucoCratePerception(Node):
         assert 0 <= self.min_confidence <= 1, "Confidence must be 0-1"
         assert self.focal_length > 0, "Focal length must be positive"
         
-        if self.marker_size != 0.04:
-            self.get_logger().warn(f"⚠️ Marker size is {self.marker_size}m, competition standard is 0.04m (40mm)")
-    
     def _setup_aruco(self):
         """Setup ArUco detector with optimized parameters"""
         # Get dictionary
@@ -283,10 +281,14 @@ class ArucoCratePerception(Node):
         
         # Marker ID mapping
         self.ARUCO_IDS = {
+            13: 'stone',
             36: 'blue',
             47: 'yellow',
-            41: 'empty'  # Competition may have empty crates
+            41: 'empty'  # Legacy 2026 crate marker
         }
+        if self.team_color not in ('stone', 'blue', 'yellow', 'empty', 'all'):
+            raise ValueError(
+                "team_color must be 'stone', 'blue', 'yellow', 'empty', or 'all'")
     
     def _setup_camera_model(self):
         """Setup camera intrinsic matrix"""
@@ -445,30 +447,26 @@ class ArucoCratePerception(Node):
         
         return float(quality)
     
-    def is_outlier(self, marker_id: int, x: float, y: float) -> bool:
-        """Check if detection is an outlier (sudden jump in position)"""
-        if not self.enable_outlier_rejection:
-            return False
-        
-        if marker_id not in self.tracked_crates:
-            return False  # First detection, can't be outlier
-        
-        tracked = self.tracked_crates[marker_id]
-        if not tracked.positions:
-            return False
-        
-        last_x, last_y = tracked.positions[-1]
-        jump_distance = math.sqrt((x - last_x)**2 + (y - last_y)**2)
-        
-        if jump_distance > self.max_position_jump:
-            self.get_logger().warn(
-                f"⚠️ Outlier rejected for {tracked.color} (jump: {jump_distance:.2f}m)",
-                throttle_duration_sec=1.0
-            )
-            return True
-        
-        return False
-    
+    def _find_track_id(self, marker_id: int, x: float, y: float,
+                       timestamp: float, matched_track_ids: Set[int]) -> Optional[int]:
+        """Associate a repeated marker ID with the nearest recent, unused track."""
+        best_track_id = None
+        best_distance = self.max_position_jump
+
+        for track_id, tracked in self.tracked_markers.items():
+            if track_id in matched_track_ids or tracked.marker_id != marker_id:
+                continue
+            if timestamp - tracked.last_seen > self.tracking_timeout:
+                continue
+
+            last_x, last_y = tracked.positions[-1]
+            distance = math.hypot(x - last_x, y - last_y)
+            if distance < best_distance:
+                best_track_id = track_id
+                best_distance = distance
+
+        return best_track_id
+
     def detect_markers(self, frame: np.ndarray, timestamp: float) -> List[dict]:
         """Main detection function"""
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
@@ -485,6 +483,7 @@ class ArucoCratePerception(Node):
             corners, self.marker_size, self.camera_matrix, self.dist_coeffs)
         
         detections = []
+        matched_track_ids = set()
         
         for i, marker_id in enumerate(ids.flatten()):
             # Filter unknown IDs
@@ -492,6 +491,8 @@ class ArucoCratePerception(Node):
                 continue
             
             color = self.ARUCO_IDS[marker_id]
+            if self.team_color != 'all' and color != self.team_color:
+                continue
             
             # Get pose
             tvec = tvecs[i][0]
@@ -508,24 +509,23 @@ class ArucoCratePerception(Node):
             if distance < self.min_distance or distance > self.max_distance:
                 continue
             
-            # Outlier rejection
-            if self.is_outlier(marker_id, x_base, y_base):
-                continue
-            
             # Confidence
             confidence = self.compute_confidence(corners[i][0], tvec, distance, angle)
             
             if confidence < self.min_confidence:
                 continue
             
-            # Update tracking
-            if self.enable_filtering:
-                if marker_id not in self.tracked_crates:
-                    self.tracked_crates[marker_id] = TrackedCrate(
-                        marker_id, color, self.filter_history_size)
-                
-                self.tracked_crates[marker_id].update(
-                    x_base, y_base, distance, angle, confidence, timestamp)
+            track_id = self._find_track_id(
+                marker_id, x_base, y_base, timestamp, matched_track_ids)
+            if track_id is None:
+                track_id = self.next_track_id
+                self.next_track_id += 1
+                self.tracked_markers[track_id] = TrackedMarker(
+                    marker_id, color, self.filter_history_size)
+
+            self.tracked_markers[track_id].update(
+                x_base, y_base, distance, angle, confidence, timestamp)
+            matched_track_ids.add(track_id)
             
             # Store detection
             detections.append({
@@ -550,7 +550,7 @@ class ArucoCratePerception(Node):
         
         filtered = []
         
-        for marker_id, tracked in self.tracked_crates.items():
+        for track_id, tracked in self.tracked_markers.items():
             if not tracked.is_stable(self.min_stable_detections):
                 continue
             
@@ -560,7 +560,7 @@ class ArucoCratePerception(Node):
             confidence = tracked.get_filtered_confidence()
             
             filtered.append({
-                'marker_id': marker_id,
+                'marker_id': tracked.marker_id,
                 'color': tracked.color,
                 'x': x,
                 'y': y,
@@ -577,12 +577,12 @@ class ArucoCratePerception(Node):
         current_time = self.get_clock().now().nanoseconds / 1e9
         
         to_remove = []
-        for marker_id, tracked in self.tracked_crates.items():
+        for track_id, tracked in self.tracked_markers.items():
             if tracked.age(current_time) > self.tracking_timeout:
-                to_remove.append(marker_id)
+                to_remove.append(track_id)
         
-        for marker_id in to_remove:
-            del self.tracked_crates[marker_id]
+        for track_id in to_remove:
+            del self.tracked_markers[track_id]
     
     # ==================== VISUALIZATION ====================
     
@@ -711,7 +711,7 @@ class ArucoCratePerception(Node):
                        0.5, (255, 255, 255), 1)
             
             status_y += 20
-            cv2.putText(debug, f"Tracked: {len(self.tracked_crates)}", 
+            cv2.putText(debug, f"Tracked: {len(self.tracked_markers)}",
                        (10, status_y), cv2.FONT_HERSHEY_SIMPLEX, 
                        0.5, (255, 255, 255), 1)
             
