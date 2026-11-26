@@ -1,17 +1,16 @@
 # Perception — eurobot_perception
 
-**Goal**: detect **blue/yellow crates** and **green pantries** in real time; output robot-relative (x,y) in meters.
+**Goal**: detect 2027 cardboard stones from ArUco ID **13** and publish robot-relative positions in meters. Legacy blue/yellow crate IDs remain recognized for the old simulation.
 
 ## Nodes
-- **crate_perception** → publishes `CrateDetectionArray`  
+- **aruco_crate_perception** → publishes `CrateDetectionArray` with 2027 stones labelled `"stone"`
 - **pantry_detection_node** → publishes `PantryDetectionArray` (with unique IDs)
 
 ## Approach
-- HSV color filtering → contour detection → size filtering (min area)  
-- Pinhole model for distance; angle from pixel offset → convert to robot (x,y)  
-- Pantry duplicate filter within **0.5 m** radius
+- ArUco detection using a configurable dictionary; the 2027 rules specify marker ID 13 but do not specify the dictionary or physical marker size.
+- Repeated marker IDs are tracked by spatial proximity so separate stones are not merged into one detection.
+- The default target label is `"stone"`; set `team_color` to `"blue"` or `"yellow"` for legacy crate markers.
 
-## Parameters (examples)
-- HSV ranges (blue/yellow/green), `min_area`, `focal_length_px`, `camera_topic`, `visualize`.
+The 2027 stone dimensions are **320 × 110 × 110 mm**. Confirm the printed marker size and dictionary against the physical field elements before using pose estimates for manipulation.
 
 _Reference: Eurobot Perception Package Documentation.pdf._
