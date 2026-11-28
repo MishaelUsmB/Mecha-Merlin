@@ -15,7 +15,7 @@ PROJ703 and PROJ903 are preparing for the Eurobot 2027 contest. The 2027 challen
 
 The requirements in this repository are based on the **Eurobot and Eurobot Junior 2027 Rules, Official 1.0**. Rules may be clarified or supplemented during the year; check the current official rules and applicable national-organizer notices before design or competition.
 
-> **Migration status:** The ArUco detector now recognizes 2027 stones (ID 13), and the controller can target them. The arena, manipulation, construction, Grail handling, and scoring are still 2026 prototypes or unimplemented; see [2027 system requirements](mam_eurobot_2026/Docs/requirements/README.md).
+> **Migration status:** The ArUco detector now recognizes 2027 stones (ID 13), and the controller can target them. The arena, manipulation, construction, Grail handling, and scoring are still 2026 prototypes or unimplemented; see [2027 system requirements](mam_eurobot_2027/Docs/requirements/README.md).
 
 ## Content
 - [x] VSCode Dev Container Template (see [Development Container](https://containers.dev/) and [Setup ROS 2 with VSCode and Docker](https://docs.ros.org/en/kilted/How-To-Guides/Setup-ROS-2-with-VSCode-and-Docker-Container.html) for more info) </p>
@@ -39,3 +39,4 @@ We suggest running this project on VSCode using the [Dev Containers extension](h
 <h1 style="text-align:center">
 &#128063; Let's code/design/build some squirrels! &#128063;
 <h1>
+Project documentation: see [docs/overview.md](docs/overview.md)

@@ -29,7 +29,7 @@ This page records project requirements derived from the **Eurobot and Eurobot Ju
 - Treat the attack phase as an optional extension; do not activate attack actions before 85 seconds.
 - Keep the simulation and controller configurable for team side/color and verify against the latest official clarifications.
 
-**Current repository status:** the ArUco detector recognizes the 2027 stone marker ID and the controller can target stones, but its grab state is a placeholder. Marker dictionary and size remain provisional. The `mam_eurobot_2026` arena and crate models remain 2026 prototypes; construction, Grail handling, return-zone logic, and scoring are still pending.
+**Current repository status:** the ArUco detector recognizes the 2027 stone marker ID and the controller can target stones, but its grab state is a placeholder. Marker dictionary and size remain provisional. The `mam_eurobot_2027` arena and crate models remain 2026 prototypes; construction, Grail handling, return-zone logic, and scoring are still pending.
 
 ## 5) Mechanical and Software Interfaces
 - Check robot, SIMA, Grail, and safety limits against the current separate general rules before design release; this rules document alone does not provide all envelope constraints.
