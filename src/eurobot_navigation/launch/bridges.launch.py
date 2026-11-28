@@ -35,14 +35,14 @@ def generate_launch_description():
             '/camera_info@sensor_msgs/msg/CameraInfo@ignition.msgs.CameraInfo',
             
             # Gripper contacts (Ignition → ROS)
-            '/world/eurobot_2026_arena/model/simple_robot/link/left_finger/sensor/left_finger_contact/contact@ros_gz_interfaces/msg/Contacts[ignition.msgs.Contacts',
-            '/world/eurobot_2026_arena/model/simple_robot/link/right_finger/sensor/right_finger_contact/contact@ros_gz_interfaces/msg/Contacts[ignition.msgs.Contacts',
+            '/world/eurobot_2027_arena/model/simple_robot/link/left_finger/sensor/left_finger_contact/contact@ros_gz_interfaces/msg/Contacts[ignition.msgs.Contacts',
+            '/world/eurobot_2027_arena/model/simple_robot/link/right_finger/sensor/right_finger_contact/contact@ros_gz_interfaces/msg/Contacts[ignition.msgs.Contacts',
 
             # Remap joint state topic
             '--ros-args',
-            '-r', '/world/eurobot_2026_arena/model/simple_robot/joint_state:=/joint_states',
-            '-r', '/world/eurobot_2026_arena/model/simple_robot/link/left_finger/sensor/left_finger_contact/contact:=/gripper/left/contact',
-            '-r', '/world/eurobot_2026_arena/model/simple_robot/link/right_finger/sensor/right_finger_contact/contact:=/gripper/right/contact'
+            '-r', '/world/eurobot_2027_arena/model/simple_robot/joint_state:=/joint_states',
+            '-r', '/world/eurobot_2027_arena/model/simple_robot/link/left_finger/sensor/left_finger_contact/contact:=/gripper/left/contact',
+            '-r', '/world/eurobot_2027_arena/model/simple_robot/link/right_finger/sensor/right_finger_contact/contact:=/gripper/right/contact'
         ],
         parameters=[{
                 'use_sim_time': True 

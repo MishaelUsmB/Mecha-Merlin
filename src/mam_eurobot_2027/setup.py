@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 import os
 from glob import glob
 
-package_name = 'mam_eurobot_2026'
+package_name = 'mam_eurobot_2027'
 
 setup(
     name=package_name,

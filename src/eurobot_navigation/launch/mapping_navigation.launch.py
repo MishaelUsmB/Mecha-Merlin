@@ -7,7 +7,7 @@ import os
 
 def generate_launch_description():
 
-    robot_description_path = "/root/eurobot_ws/src/mam_eurobot_2026/models/simple_robot/simple_robot.urdf"
+    robot_description_path = "/root/eurobot_ws/src/mam_eurobot_2027/models/simple_robot/simple_robot.urdf"
     nav2_params_path = "/root/eurobot_ws/src/eurobot_navigation/config/nav2_params.yaml"
 
     eurobot_nav_share = get_package_share_directory("eurobot_navigation")

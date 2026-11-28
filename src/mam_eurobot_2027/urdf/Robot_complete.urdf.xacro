@@ -2,9 +2,9 @@
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="Robot">
   
   <!-- Include the main URDF -->
-  <xacro:include filename="$(find mam_eurobot_2026)/urdf/Robot.urdf" />
+  <xacro:include filename="$(find mam_eurobot_2027)/urdf/Robot.urdf" />
   
   <!-- Include Gazebo tags -->
-  <xacro:include filename="$(find mam_eurobot_2026)/urdf/Robot.gazebo" />
+  <xacro:include filename="$(find mam_eurobot_2027)/urdf/Robot.gazebo" />
 
 </robot>

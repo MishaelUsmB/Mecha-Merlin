@@ -7,7 +7,7 @@ import os
 
 def generate_launch_description():
 
-    pkg_share = get_package_share_directory('mam_eurobot_2026')
+    pkg_share = get_package_share_directory('mam_eurobot_2027')
 
     urdf_path = os.path.join(
         pkg_share,

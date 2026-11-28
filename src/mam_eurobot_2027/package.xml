@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
-  <name>mam_eurobot_2026</name>
+  <name>mam_eurobot_2027</name>
   <version>0.0.0</version>
   <description>This is a template package for the Master Advanced Mechatronics teams preparing for the Eurobot 2026</description>
   <maintainer email="liendomf@univ-smb.fr">rosdev</maintainer>
