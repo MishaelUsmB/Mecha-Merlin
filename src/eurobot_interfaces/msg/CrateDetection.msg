@@ -2,8 +2,8 @@
 
 std_msgs/Header header
 
-# Crate identification
-string color              # "blue", "yellow", or "unknown"
+# Target identification
+string color              # 2027: "stone"; legacy crates: "blue", "yellow", or "empty"
 float64 confidence        # Detection confidence [0.0 - 1.0]
 
 # Position (in frame specified by header.frame_id)

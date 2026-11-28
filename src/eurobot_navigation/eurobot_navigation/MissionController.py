@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-MISSION CONTROLLER - EUROBOT 2026 (Robust Patch Version)
-Compatible with production ArUco perception node
+Stone approach controller for Eurobot 2027.
+Manipulation, construction, and scoring actions are not implemented yet.
 """
 
 import math
@@ -64,7 +64,7 @@ class MissionController(Node):
     # ---------------- PARAMETERS ----------------
 
     def _declare_parameters(self):
-        self.declare_parameter('team_color', 'yellow')
+        self.declare_parameter('team_color', 'stone')
         self.declare_parameter('grasp_distance', 0.15)
 
         self.declare_parameter('align_threshold_deg', 5.0)
